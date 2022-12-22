@@ -2,11 +2,18 @@ package mongodb
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"log"
 
 	"github.com/krlspj/go-jwt-auth/internal/auth/domain"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+)
+
+var (
+	ErrBadMethod error = errors.New("Bad method used, use FindOne instead")
 )
 
 const (
@@ -15,12 +22,17 @@ const (
 )
 
 type UserRepository struct {
-	cli *mongo.Client
+	cli        *mongo.Client
+	database   mongo.Database
+	collection mongo.Collection
 }
 
-func NewUserRepositoryMongo(client *mongo.Client) *UserRepository {
+func NewUserRepositoryMongo(client *mongo.Client, dbName, collName string) *UserRepository {
+	db := client.Database(dbName)
 	return &UserRepository{
-		cli: client,
+		cli:        client,
+		database:   *db,
+		collection: *db.Collection(collName),
 	}
 }
 
@@ -34,7 +46,7 @@ func (m *UserRepository) FindAll(ctx context.Context) ([]domain.User, error) {
 	}
 	defer cur.Close(ctx)
 
-	var allusers []userDB
+	var allusers []userMongo
 	err = cur.All(ctx, &allusers)
 	if err != nil {
 		fmt.Println("Error:", err.Error())
@@ -43,4 +55,42 @@ func (m *UserRepository) FindAll(ctx context.Context) ([]domain.User, error) {
 	fmt.Println("allusers ->", allusers)
 
 	return toDomainUsers(allusers)
+}
+
+func (m *UserRepository) FindOne(ctx context.Context, id string) (domain.User, error) {
+	var (
+		user userMongo
+		err  error
+	)
+
+	idHex, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return domain.User{}, err
+	}
+
+	err = m.collection.FindOne(ctx, bson.M{"_id": idHex}).Decode(&user)
+	if err != nil {
+		return domain.User{}, err
+	}
+	return user.toDomainUser(), nil
+}
+
+func (m *UserRepository) FindOneByField(ctx context.Context, fieldName, fieldValue string) (domain.User, error) {
+	var user userMongo
+	if fieldName == "_id" {
+		return domain.User{}, ErrBadMethod
+	}
+
+	err := m.collection.FindOne(ctx, bson.M{fieldName: fieldValue}).Decode(&user)
+	if err != nil {
+		log.Println("error on fetching user:", err)
+		return domain.User{}, err
+
+	}
+	return user.toDomainUser(), nil
+}
+
+func (s *UserRepository) CreateUser(ctx context.Context, user domain.User) error {
+	return errors.New("Mongo method not implemented yet")
+	//return nil
 }

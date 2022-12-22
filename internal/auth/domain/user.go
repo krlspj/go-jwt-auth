@@ -1,9 +1,14 @@
 package domain
 
-import "context"
+import (
+	"context"
+
+	"golang.org/x/crypto/bcrypt"
+)
 
 type User struct {
-	id          string
+	id string
+	//Xname       string `validate:"required"` -> To validate this need to be public (X) not private (x)
 	name        string
 	lastname    string
 	password    string
@@ -51,6 +56,56 @@ func (u *User) SetToken(token string) {
 
 // Other methods
 
+// HasPassword hashes the password from the user
+func (u *User) HashPassword() error {
+	hashedPass, err := hashPassword(u.Password())
+	if err != nil {
+		return err
+	}
+	u.SetPassword(hashedPass)
+	return nil
+}
+
+// VerifyPassword, returns an error if the provided password is not the one for this user
+func (u *User) VerifyPassword(providedPass string) error {
+	if err := verifyPassword(u.Password(), providedPass); err != nil {
+		return err
+	}
+	return nil
+}
+
+//func (u *User) ValidateUser() error {
+//	fmt.Println(" validateUser")
+//	validate := validator.New()
+//	if err := validate.Struct(u); err != nil {
+//		return err
+//	}
+//	return nil
+//}
+
+// HashPassword returns an encrypted passwor
+func hashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost) // this hash generation already uses a salt in it
+	if err != nil {
+		return "", err
+	}
+
+	return string(bytes), nil
+}
+
+// VerifyPassword returns true if passwords maches. When not, false and a message
+func verifyPassword(userPassword string, providedPassword string) error {
+	err := bcrypt.CompareHashAndPassword([]byte(providedPassword), []byte(userPassword))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 type UserRepo interface {
 	FindAll(ctx context.Context) ([]User, error)
+	// FindOne use the mongo id to find the record
+	FindOne(ctx context.Context, id string) (User, error)
+	FindOneByField(ctx context.Context, fieldName, fieldValue string) (User, error)
+	CreateUser(ctx context.Context, user User) error
 }
