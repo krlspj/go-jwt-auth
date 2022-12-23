@@ -52,7 +52,6 @@ func (m *UserRepository) FindAll(ctx context.Context) ([]domain.User, error) {
 		fmt.Println("Error:", err.Error())
 		return nil, err
 	}
-	fmt.Println("allusers ->", allusers)
 
 	return toDomainUsers(allusers)
 }
@@ -63,12 +62,12 @@ func (m *UserRepository) FindOne(ctx context.Context, id string) (domain.User, e
 		err  error
 	)
 
-	idHex, err := primitive.ObjectIDFromHex(id)
+	oid, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return domain.User{}, err
 	}
 
-	err = m.collection.FindOne(ctx, bson.M{"_id": idHex}).Decode(&user)
+	err = m.collection.FindOne(ctx, bson.M{"_id": oid}).Decode(&user)
 	if err != nil {
 		return domain.User{}, err
 	}
@@ -90,7 +89,18 @@ func (m *UserRepository) FindOneByField(ctx context.Context, fieldName, fieldVal
 	return user.toDomainUser(), nil
 }
 
-func (s *UserRepository) CreateUser(ctx context.Context, user domain.User) error {
-	return errors.New("Mongo method not implemented yet")
+func (s *UserRepository) InsertUser(ctx context.Context, user domain.User) error {
+	userMg, err := toMongoUser(user)
+	if err != nil {
+		return err
+	}
+	result, err := s.collection.InsertOne(ctx, userMg)
+	if err != nil {
+		return err
+	}
+	//uid := result.InsertedID.(string)
+	uid := result.InsertedID.(primitive.ObjectID).Hex()
+	fmt.Println("Inserted id:", uid)
+	return nil
 	//return nil
 }

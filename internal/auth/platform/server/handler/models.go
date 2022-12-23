@@ -7,9 +7,9 @@ import (
 
 type userReq struct {
 	Name     string `json:"username" validate:"required,min=3,max=15"`
-	LastName string `json:"lastname"`
+	LastName string `json:"lastname,omitemtpy"`
 	Password string `json:"password" validate:"required,min=8,max=30"`
-	Email    string `json:"email"`
+	Email    string `json:"email,omitempty"`
 }
 
 func (m *userReq) toDomainUser() domain.User {
@@ -32,8 +32,8 @@ type userResp struct {
 	ID       string `json:"id"`
 	Name     string `json:"username"`
 	LastName string `json:"lastname"`
-	Password string `json:"password"`
-	Token    string `json:"token,omitempty"`
+	//Password string `json:"password"`
+	//Token    string `json:"token,omitempty"`
 }
 
 func toUserResp(user domain.User) userResp {
@@ -41,8 +41,8 @@ func toUserResp(user domain.User) userResp {
 		ID:       user.ID(),
 		Name:     user.Name(),
 		LastName: user.Lastname(),
-		Token:    user.Token(),
-		Password: user.Password(),
+		//Token:    user.Token(),
+		//Password: user.Password(),
 	}
 }
 

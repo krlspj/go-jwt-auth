@@ -39,7 +39,7 @@ func (s *UserRepositoryStub) FindOne(ctx context.Context, id string) (domain.Use
 	}
 	return domain.User{}, ErrNotUserFound
 }
-func (s *UserRepositoryStub) CreateUser(ctx context.Context, user domain.User) error {
+func (s *UserRepositoryStub) InsertUser(ctx context.Context, user domain.User) error {
 	udb := toUserDB(user)
 	udb.GenerateUUID()
 	s.users = append(s.users, udb)

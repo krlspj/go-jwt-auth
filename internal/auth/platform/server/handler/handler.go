@@ -10,12 +10,14 @@ import (
 	"github.com/krlspj/go-jwt-auth/internal/auth/platform/storage/inmemory"
 	"github.com/krlspj/go-jwt-auth/internal/auth/platform/storage/mongodb"
 	"github.com/krlspj/go-jwt-auth/internal/auth/service"
+	"github.com/krlspj/go-jwt-auth/internal/config"
+	jwt_uc "github.com/krlspj/go-jwt-auth/internal/jwt/usecase"
 )
 
 type AuthHandler struct {
-	// app *config.AppConfig
-	// rs  render_service.RenderService
+	app         *config.AppConfig
 	authService service.AuthService
+	jwtUsecase  jwt_uc.JwtUsecase
 	validate    *validator.Validate
 }
 
@@ -26,9 +28,11 @@ type AuthHandler struct {
 //	}
 //}
 
-func NewAuthHanlderRepo(as service.AuthService, v *validator.Validate) *AuthHandler {
+func NewAuthHanlderRepo(a *config.AppConfig, as service.AuthService, jwtUc jwt_uc.JwtUsecase, v *validator.Validate) *AuthHandler {
 	return &AuthHandler{
+		app:         a,
 		authService: as,
+		jwtUsecase:  jwtUc,
 		validate:    v, // validator.New(),
 	}
 }
@@ -62,6 +66,23 @@ func (h *AuthHandler) FindUsers() gin.HandlerFunc {
 }
 
 func (h *AuthHandler) FindUser(c *gin.Context) {
+	// token validation
+	var token map[string]string
+	if err := c.BindJSON(&token); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	t := token["token"]
+	fmt.Println("->", t)
+
+	claims, err := h.jwtUsecase.ValidateToken(t)
+	if err != nil {
+		fmt.Println("error validating token", err)
+		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		return
+
+	}
+
 	id := c.Param("id")
 	user, err := h.authService.FindUser(c.Request.Context(), id)
 	if err != nil {
@@ -79,7 +100,7 @@ func (h *AuthHandler) FindUser(c *gin.Context) {
 		return
 	}
 	fmt.Println("user:", user)
-	c.JSON(http.StatusOK, gin.H{"user": toUserResp(user)})
+	c.JSON(http.StatusOK, gin.H{"user": toUserResp(user), "claims": claims})
 
 }
 
@@ -120,15 +141,23 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	fmt.Println("user", user)
-
 	u, err := h.authService.LoginUser(c.Request.Context(), user.Name, user.Password)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, err.Error())
+		c.JSON(http.StatusForbidden, err.Error())
+		return
 	}
 
+	// if correct credentials generate token
+	token, err := h.jwtUsecase.GenerateToken(h.app.TokenLifetime, u.ID(), u.Name())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+	u.SetToken(token)
+	c.Header("X-Access-Token", token)
 	c.JSON(http.StatusOK, gin.H{"info": "correct credentials", "user": toUserResp(u)})
 }
+
 func (h *AuthHandler) CreateNewUser(c *gin.Context) {
 	var user userReq
 	if err := c.BindJSON(&user); err != nil {
@@ -156,3 +185,57 @@ func (h *AuthHandler) validateReq(req userReq) error {
 	}
 	return nil
 }
+
+//type jwtClaims struct {
+//	Username string `json:"username,omitemtpy"`
+//	UserId   string `json:"userId,omitempty"`
+//	jwt.StandardClaims
+//}
+//
+//// generateToken returns the generated token and an error
+//func generateToken(userId, username string) (string, error) {
+//
+//	claims := &jwtClaims{
+//		Username: username,
+//		UserId:   userId,
+//		//Email:    email,
+//		//RoleId: role,
+//		StandardClaims: jwt.StandardClaims{
+//			ExpiresAt: time.Now().Local().Add(1 * time.Minute).Unix(),
+//		},
+//	}
+//	secretKey := "this is my secret"
+//	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(secretKey))
+//
+//	//refreshToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString([]byte(secret_key))
+//
+//	if err != nil {
+//		log.Panic(err)
+//		return "", err
+//	}
+//
+//	return token, nil
+//}
+//
+//func validateToken(signedToken string) error {
+//	token, err := jwt.Parse(signedToken, func(token *jwt.Token) (interface{}, error) {
+//		// Don't forget to validate the alg is what you expect:
+//		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+//			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+//		}
+//
+//		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
+//		hmacSampleSecret := "this is my secret"
+//
+//		return []byte(hmacSampleSecret), nil
+//	})
+//
+//	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+//		fmt.Println("claims >", claims)
+//	} else {
+//		fmt.Println(err)
+//		return err
+//	}
+//	return nil
+//}
+//

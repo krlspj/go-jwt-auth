@@ -32,31 +32,40 @@ func (u *User) Name() string {
 func (u *User) SetName(name string) {
 	u.name = name
 }
-
 func (u *User) Lastname() string {
 	return u.lastname
 }
 func (u *User) SetLastname(lastname string) {
 	u.lastname = lastname
 }
-
 func (u *User) Password() string {
 	return u.password
 }
 func (u *User) SetPassword(password string) {
 	u.password = password
 }
-
 func (u *User) Token() string {
 	return u.token
 }
 func (u *User) SetToken(token string) {
 	u.token = token
 }
+func (u *User) CreatedTime() string {
+	return u.createdTime
+}
+func (u *User) SetCreatedTime(ct string) {
+	u.createdTime = ct
+}
+func (u *User) UpdatedTime() string {
+	return u.updatedTime
+}
+func (u *User) SetUpdatedTime(ut string) {
+	u.updatedTime = ut
+}
 
 // Other methods
 
-// HasPassword hashes the password from the user
+// HasPassword hashes and stores the password in user.password
 func (u *User) HashPassword() error {
 	hashedPass, err := hashPassword(u.Password())
 	if err != nil {
@@ -83,19 +92,18 @@ func (u *User) VerifyPassword(providedPass string) error {
 //	return nil
 //}
 
-// HashPassword returns an encrypted passwor
+// hashPassword returns an encrypted passwor
 func hashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost) // this hash generation already uses a salt in it
 	if err != nil {
 		return "", err
 	}
-
 	return string(bytes), nil
 }
 
-// VerifyPassword returns true if passwords maches. When not, false and a message
-func verifyPassword(userPassword string, providedPassword string) error {
-	err := bcrypt.CompareHashAndPassword([]byte(providedPassword), []byte(userPassword))
+// verifyPassword returns an error if passwords not match
+func verifyPassword(hashPass string, providedPassword string) error {
+	err := bcrypt.CompareHashAndPassword([]byte(hashPass), []byte(providedPassword))
 	if err != nil {
 		return err
 	}
@@ -107,5 +115,5 @@ type UserRepo interface {
 	// FindOne use the mongo id to find the record
 	FindOne(ctx context.Context, id string) (User, error)
 	FindOneByField(ctx context.Context, fieldName, fieldValue string) (User, error)
-	CreateUser(ctx context.Context, user User) error
+	InsertUser(ctx context.Context, user User) error
 }

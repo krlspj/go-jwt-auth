@@ -10,17 +10,24 @@ import (
 	"github.com/krlspj/go-jwt-auth/internal/auth/platform/storage/inmemory"
 	"github.com/krlspj/go-jwt-auth/internal/auth/platform/storage/mongodb"
 	"github.com/krlspj/go-jwt-auth/internal/auth/service"
+	"github.com/krlspj/go-jwt-auth/internal/config"
 	"github.com/krlspj/go-jwt-auth/internal/dbdriver"
+	jwt_uc "github.com/krlspj/go-jwt-auth/internal/jwt/usecase"
 	"github.com/krlspj/go-jwt-auth/internal/server"
 )
 
 const (
 	mongoDatabase       = "jwt_test"
 	mongoUserCollection = "users"
-	dbtype              = "inmemory"
+	dbtype              = "mongo" // "mongo" | "inmemory"
 )
 
 func Run() error {
+
+	// Configuration
+	app := config.NewAppConfig()
+	app.TokenLifetime = 1
+
 	// check connection with database, if error -> use inmemory database
 	// uncoment lines to connect to mongodb if available
 	var authUserRepo domain.UserRepo
@@ -38,7 +45,7 @@ func Run() error {
 			log.Println("\033[00;32m[NOTICE] Using inmemory database\033[0m")
 			authUserRepo = inmemory.NewUserRepositoryStub()
 		}
-		log.Println("\033[00;32m[NOTICE] Using external database\033[0m")
+		log.Println("\033[00;32m[NOTICE] Using mongo database\033[0m")
 		authUserRepo = mongodb.NewUserRepositoryMongo(dbClient.MONGO, mongoDatabase, mongoUserCollection)
 
 	} else {
@@ -49,10 +56,11 @@ func Run() error {
 	//log.Println("\033[00;32m[NOTICE] Using inmemory database\033[0m")
 
 	//authUserRepo = inmemory.NewUserRepositoryStub()
-
+	hmacSampleSecret := "this is my secret"
+	juc := jwt_uc.NewJwtUsecase(hmacSampleSecret)
 	as := service.NewAuthService(authUserRepo)
 
-	ah := handler.NewAuthHanlderRepo(as, validator.New())
+	ah := handler.NewAuthHanlderRepo(app, as, juc, validator.New())
 
 	ctx := context.TODO()
 	s := server.NewServer(ctx, "localhost", 60002, ah)

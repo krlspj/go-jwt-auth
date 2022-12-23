@@ -47,7 +47,7 @@ func ConnectMongo() (*DB, error) {
 		//panic(err)
 	}
 
-	log.Println("\033[1;32m[DATABASE] Successfully connected\033[0m")
+	log.Println("\033[0;32m[NOTICE] [DATABASE] Successfully connected\033[0m")
 	return &DB{
 		MONGO: client,
 	}, nil

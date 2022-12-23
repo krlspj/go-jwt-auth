@@ -40,10 +40,20 @@ func (s *authService) FindUser(ctx context.Context, id string) (domain.User, err
 
 func (s *authService) LoginUser(ctx context.Context, username, password string) (domain.User, error) {
 	// find user in db
+	user, err := s.userRepo.FindOneByField(ctx, "username", username)
+	if err != nil {
+		return domain.User{}, err
+	}
 
 	// verify passwords
+	if err := user.VerifyPassword(password); err != nil {
+		return domain.User{}, err
+	}
 
-	return domain.User{}, nil
+	// (TODO) create a refresh token and return it
+
+	return user, nil
+
 }
 
 func (s *authService) CreateUser(ctx context.Context, user domain.User) error {
@@ -60,7 +70,7 @@ func (s *authService) CreateUser(ctx context.Context, user domain.User) error {
 	}
 
 	// Insert user in database
-	if err := s.userRepo.CreateUser(ctx, user); err != nil {
+	if err := s.userRepo.InsertUser(ctx, user); err != nil {
 		return err
 	}
 	return nil
