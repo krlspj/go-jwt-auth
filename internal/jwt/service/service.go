@@ -1,7 +1,6 @@
-package usecase
+package service
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -17,24 +16,24 @@ type JwtClaims struct {
 
 // type JwtUsecaser interface {
 // JwtUsecase defines the jwt service
-type JwtUsecase interface {
+type JwtService interface {
 	GenerateToken(lifeTime int, userId, username string) (string, error)
 	//ValidateToken(signedToken string) (jwtClaims, error)
 	ValidateToken(signedToken string) (JwtClaims, error)
 }
 
-type defJwtUsecase struct {
-	bSecret []byte
+type defJwtService struct {
+	secret string
 }
 
-func NewJwtUsecase(hmacSampleSecret string) *defJwtUsecase {
-	return &defJwtUsecase{
-		bSecret: []byte(hmacSampleSecret),
+func NewJwtUsecase(hmacSampleSecret string) *defJwtService {
+	return &defJwtService{
+		secret: hmacSampleSecret,
 	}
 }
 
 // generateToken returns the generated token and an error
-func (s *defJwtUsecase) GenerateToken(lifeTime int, userId, username string) (string, error) {
+func (s *defJwtService) GenerateToken(lifeTime int, userId, username string) (string, error) {
 	claims := &JwtClaims{
 		Username: username,
 		UserId:   userId,
@@ -44,7 +43,7 @@ func (s *defJwtUsecase) GenerateToken(lifeTime int, userId, username string) (st
 			ExpiresAt: time.Now().Local().Add(time.Duration(lifeTime) * time.Minute).Unix(),
 		},
 	}
-	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(s.bSecret)
+	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(s.secret))
 
 	//refreshToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString([]byte(secret_key))
 	if err != nil {
@@ -55,7 +54,7 @@ func (s *defJwtUsecase) GenerateToken(lifeTime int, userId, username string) (st
 	return token, nil
 }
 
-func (s *defJwtUsecase) ValidateToken(signedToken string) (JwtClaims, error) {
+func (s *defJwtService) ValidateToken(signedToken string) (JwtClaims, error) {
 	token, err := jwt.ParseWithClaims(
 		signedToken,
 		&JwtClaims{},
@@ -64,19 +63,19 @@ func (s *defJwtUsecase) ValidateToken(signedToken string) (JwtClaims, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 			}
-			return s.bSecret, nil
+			return []byte(s.secret), nil
 		})
 
-	if token.Valid {
-		fmt.Println("You look nice today")
-	} else if errors.Is(err, jwt.ErrTokenMalformed) {
-		fmt.Println("That's not even a token")
-	} else if errors.Is(err, jwt.ErrTokenExpired) || errors.Is(err, jwt.ErrTokenNotValidYet) {
-		// Token is either expired or not active yet
-		fmt.Println("Timing is everything")
-	} else {
-		fmt.Println("Couldn't handle this token:", err)
-	}
+	//if token.Valid {
+	//	fmt.Println("You look nice today")
+	//} else if errors.Is(err, jwt.ErrTokenMalformed) {
+	//	fmt.Println("That's not even a token")
+	//} else if errors.Is(err, jwt.ErrTokenExpired) || errors.Is(err, jwt.ErrTokenNotValidYet) {
+	//	// Token is either expired or not active yet
+	//	fmt.Println("Timing is everything")
+	//} else {
+	//	fmt.Println("Couldn't handle this token:", err)
+	//}
 
 	if claims, ok := token.Claims.(*JwtClaims); ok && token.Valid {
 		return *claims, nil
@@ -101,7 +100,7 @@ func GenerateToken(lifeTime int, userId, username string) (string, error) {
 			ExpiresAt: time.Now().Local().Add(time.Duration(lifeTime) * time.Minute).Unix(),
 		},
 	}
-	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(tokenSecret)
+	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(tokenSecret))
 
 	//refreshToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString([]byte(secret_key))
 	if err != nil {
@@ -121,7 +120,7 @@ func ValidateToken(signedToken string) (JwtClaims, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 			}
-			return tokenSecret, nil
+			return []byte(tokenSecret), nil
 		})
 
 	if claims, ok := token.Claims.(*JwtClaims); ok && token.Valid {

@@ -5,32 +5,41 @@ import (
 	"log"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/krlspj/go-jwt-auth/internal/auth/domain"
-	"github.com/krlspj/go-jwt-auth/internal/auth/platform/server/handler"
+	auth_domain "github.com/krlspj/go-jwt-auth/internal/auth/domain"
+	auth_handler "github.com/krlspj/go-jwt-auth/internal/auth/platform/server/handler"
 	"github.com/krlspj/go-jwt-auth/internal/auth/platform/storage/inmemory"
-	"github.com/krlspj/go-jwt-auth/internal/auth/platform/storage/mongodb"
+	auth_mongo "github.com/krlspj/go-jwt-auth/internal/auth/platform/storage/mongodb"
 	"github.com/krlspj/go-jwt-auth/internal/auth/service"
+	authz_domain "github.com/krlspj/go-jwt-auth/internal/authz/domain"
+	authz_handler "github.com/krlspj/go-jwt-auth/internal/authz/platform/server/handler"
+	authz_mongo "github.com/krlspj/go-jwt-auth/internal/authz/platform/storage/mongodb"
+	authz_uc "github.com/krlspj/go-jwt-auth/internal/authz/usecase"
 	"github.com/krlspj/go-jwt-auth/internal/config"
 	"github.com/krlspj/go-jwt-auth/internal/dbdriver"
-	jwt_uc "github.com/krlspj/go-jwt-auth/internal/jwt/usecase"
+	jwt_service "github.com/krlspj/go-jwt-auth/internal/jwt/service"
 	"github.com/krlspj/go-jwt-auth/internal/server"
 )
 
 const (
+	// TODO -> set as enviroment variables (or flags)
 	mongoDatabase       = "jwt_test"
 	mongoUserCollection = "users"
 	dbtype              = "mongo" // "mongo" | "inmemory"
+	hmacSampleSecret    = "myTokenSecret"
 )
 
 func Run() error {
 
 	// Configuration
 	app := config.NewAppConfig()
-	app.TokenLifetime = 1
+	app.TokenLifetime = 5
 
 	// check connection with database, if error -> use inmemory database
 	// uncoment lines to connect to mongodb if available
-	var authUserRepo domain.UserRepo
+	var (
+		authUserRepo  auth_domain.UserRepo
+		authzUserRepo authz_domain.AuthzUserRepo
+	)
 	const DB_TYPE = dbtype
 
 	if DB_TYPE == "inmemory" {
@@ -46,24 +55,25 @@ func Run() error {
 			authUserRepo = inmemory.NewUserRepositoryStub()
 		}
 		log.Println("\033[00;32m[NOTICE] Using mongo database\033[0m")
-		authUserRepo = mongodb.NewUserRepositoryMongo(dbClient.MONGO, mongoDatabase, mongoUserCollection)
+		authUserRepo = auth_mongo.NewUserRepositoryMongo(dbClient.MONGO, mongoDatabase, mongoUserCollection)
+		authzUserRepo = authz_mongo.NewAuthzUserRepositoryMongo(dbClient.MONGO, mongoDatabase, mongoUserCollection)
 
 	} else {
 		log.Println("\033[00;32m[NOTICE] Using inmemory database\033[0m")
 		authUserRepo = inmemory.NewUserRepositoryStub()
 	}
 
-	//log.Println("\033[00;32m[NOTICE] Using inmemory database\033[0m")
+	// Usecases / services
+	jwtService := jwt_service.NewJwtUsecase(hmacSampleSecret)
+	authService := service.NewAuthService(authUserRepo)
+	authzUsecase := authz_uc.NewAuthzUsecase(jwtService, authzUserRepo)
 
-	//authUserRepo = inmemory.NewUserRepositoryStub()
-	hmacSampleSecret := "this is my secret"
-	juc := jwt_uc.NewJwtUsecase(hmacSampleSecret)
-	as := service.NewAuthService(authUserRepo)
-
-	ah := handler.NewAuthHanlderRepo(app, as, juc, validator.New())
+	// Handler / controller
+	ah := auth_handler.NewAuthHanlderRepo(app, authService, jwtService, validator.New())
+	az := authz_handler.NewAuthz(app, authzUsecase)
 
 	ctx := context.TODO()
-	s := server.NewServer(ctx, "localhost", 60002, ah)
+	s := server.NewServer(ctx, "localhost", 60002, ah, az)
 	serverType := "native" // "gin" | "native"
 
 	return s.Run(ctx, serverType)

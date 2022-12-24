@@ -11,13 +11,13 @@ import (
 	"github.com/krlspj/go-jwt-auth/internal/auth/platform/storage/mongodb"
 	"github.com/krlspj/go-jwt-auth/internal/auth/service"
 	"github.com/krlspj/go-jwt-auth/internal/config"
-	jwt_uc "github.com/krlspj/go-jwt-auth/internal/jwt/usecase"
+	jwt_uc "github.com/krlspj/go-jwt-auth/internal/jwt/service"
 )
 
 type AuthHandler struct {
 	app         *config.AppConfig
 	authService service.AuthService
-	jwtUsecase  jwt_uc.JwtUsecase
+	jwtService  jwt_uc.JwtService
 	validate    *validator.Validate
 }
 
@@ -28,11 +28,17 @@ type AuthHandler struct {
 //	}
 //}
 
-func NewAuthHanlderRepo(a *config.AppConfig, as service.AuthService, jwtUc jwt_uc.JwtUsecase, v *validator.Validate) *AuthHandler {
+func NewAuthHanlderRepo(
+	a *config.AppConfig,
+	as service.AuthService,
+	jwtS jwt_uc.JwtService,
+	v *validator.Validate,
+) *AuthHandler {
+
 	return &AuthHandler{
 		app:         a,
 		authService: as,
-		jwtUsecase:  jwtUc,
+		jwtService:  jwtS,
 		validate:    v, // validator.New(),
 	}
 }
@@ -66,22 +72,6 @@ func (h *AuthHandler) FindUsers() gin.HandlerFunc {
 }
 
 func (h *AuthHandler) FindUser(c *gin.Context) {
-	// token validation
-	var token map[string]string
-	if err := c.BindJSON(&token); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	t := token["token"]
-	fmt.Println("->", t)
-
-	claims, err := h.jwtUsecase.ValidateToken(t)
-	if err != nil {
-		fmt.Println("error validating token", err)
-		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
-		return
-
-	}
 
 	id := c.Param("id")
 	user, err := h.authService.FindUser(c.Request.Context(), id)
@@ -100,7 +90,7 @@ func (h *AuthHandler) FindUser(c *gin.Context) {
 		return
 	}
 	fmt.Println("user:", user)
-	c.JSON(http.StatusOK, gin.H{"user": toUserResp(user), "claims": claims})
+	c.JSON(http.StatusOK, gin.H{"user": toUserResp(user)})
 
 }
 
@@ -148,7 +138,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	}
 
 	// if correct credentials generate token
-	token, err := h.jwtUsecase.GenerateToken(h.app.TokenLifetime, u.ID(), u.Name())
+	token, err := h.jwtService.GenerateToken(h.app.TokenLifetime, u.ID(), u.Name())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return

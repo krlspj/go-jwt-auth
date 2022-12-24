@@ -7,7 +7,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/krlspj/go-jwt-auth/internal/auth/platform/server/handler"
+	auth_handler "github.com/krlspj/go-jwt-auth/internal/auth/platform/server/handler"
+	authz_handler "github.com/krlspj/go-jwt-auth/internal/authz/platform/server/handler"
 )
 
 const (
@@ -22,14 +23,22 @@ type Server struct {
 	//mux      http.Handler
 
 	// Handlers
-	ah *handler.AuthHandler
+	ah *auth_handler.AuthHandler
+	az *authz_handler.AuthzMidd
 	//ms       mid.MiddlewareService
 
 	//mux      *pat.PatternServeMux
 	//mux      *http.ServeMux
 }
 
-func NewServer(ctx context.Context, host string, port uint, authHanlder *handler.AuthHandler) Server { //, hr *handlers.HandlerRepo,m mid.MiddlewareService) Server { //(context.Context, Server) {
+func NewServer(
+	ctx context.Context,
+	host string,
+	port uint,
+	authHanlder *auth_handler.AuthHandler,
+	authzMidd *authz_handler.AuthzMidd,
+
+) Server { //, hr *handlers.HandlerRepo,m mid.MiddlewareService) Server { //(context.Context, Server) {
 	//func New(ctx context.Context, host string, port uint, router http.Handler, hr *handlers.HandlerRepo) Server { //(context.Context, Server) {
 	srv := Server{
 		httpAddr: fmt.Sprintf(host + ":" + fmt.Sprint(port)),
@@ -40,6 +49,7 @@ func NewServer(ctx context.Context, host string, port uint, authHanlder *handler
 
 		// Handlers
 		ah: authHanlder,
+		az: authzMidd,
 		//ms: m,
 	}
 
@@ -84,11 +94,13 @@ func (s *Server) Run(ctx context.Context, serverType string) error {
 func (s *Server) registerRoutes() {
 	fmt.Println("Engine routes ...")
 	s.engine.GET("/health", s.ah.CheckHandler())
-	s.engine.GET("/login", s.ah.Login)
+	s.engine.POST("/login", s.ah.Login)
 	s.engine.POST("/register", s.ah.CreateNewUser)
 
 	usersGroup := s.engine.Group("/users")
-	usersGroup.GET("/", s.ah.FindUsers())
+	usersGroup.Use(s.az.VeriyToken)
+
+	usersGroup.GET("/", s.az.OnlyAdmin(), s.ah.FindUsers())
 	usersGroup.GET("/c", s.ah.FindUsersC)
 	usersGroup.GET("/:id", s.ah.FindUser)
 	usersGroup.GET("/by_field", s.ah.FindUserByField)
