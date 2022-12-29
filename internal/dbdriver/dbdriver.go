@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -57,4 +58,71 @@ func OpenCollection(client *mongo.Client, collectionName, databaseName string) *
 	//var collection *mongo.Collection = client.Database("cluster0").Collection(collectionName)
 	//databaseName := os.Getenv("DATABASE_NAME")
 	return client.Database(databaseName).Collection(collectionName)
+}
+
+func CreateUserCollection(cli *mongo.Client) error {
+	// err = m.DB.Database("uskytest").CreateCollection(ctx, user_col, &userCollOpts)
+	//collNames, err := cli.Database("jwt_test").ListCollectionNames(context.Background(), bson.M{})
+	// err := Ocli.Database("jwt_test").Drop(context.Background())
+	//if err != nil {
+	//	return err
+	//}
+	//fmt.Println("collNames", collNames)
+
+	err := cli.Database("jwt_test").Collection("users").Drop(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	userCollOpts := options.CreateCollectionOptions{
+		Validator: bson.M{
+			"$jsonSchema": bson.M{
+				"bsonType":    "object",
+				"description": "user definition",
+				"required":    bson.A{"username", "password"},
+				"properties": bson.M{
+					"username": bson.M{
+						"bsonType":    "string",
+						"description": "Ability name",
+						"maxLength":   30,
+					},
+					"password": bson.M{
+						"bsonType":    "string",
+						"description": "password is required",
+					},
+					"email": bson.M{
+						"bsonType":    "string",
+						"description": "user's email",
+						"minLength":   6,
+						"maxLength":   127,
+					},
+					"roleId": bson.M{
+						"bsonType": "objectId",
+					},
+					"refreshPassword": bson.M{
+						"enum":        bson.A{"true", "false"},
+						"description": "this flag forces user to renew its password",
+					},
+				},
+			},
+		},
+	}
+
+	err = cli.Database("jwt_test").CreateCollection(context.Background(), "users", &userCollOpts)
+	if err != nil {
+		return err
+	}
+
+	// Create collection index
+	//indexModel := mongo.IndexModel{
+	//	Keys:    bson.D{{Key: "username", Value: 1}},
+	//	Options: options.Index().SetUnique(true),
+	//}
+	//name, err := cli.Database("jwt_test").Collection("users").Indexes().CreateOne(context.TODO(), indexModel)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//fmt.Println("Name of Index Created: " + name)
+
+	return nil
 }

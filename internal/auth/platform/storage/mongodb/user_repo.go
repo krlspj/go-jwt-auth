@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var (
@@ -90,6 +91,7 @@ func (m *UserRepository) FindOneByField(ctx context.Context, fieldName, fieldVal
 }
 
 func (s *UserRepository) InsertUser(ctx context.Context, user domain.User) error {
+
 	userMg, err := toMongoUser(user)
 	if err != nil {
 		return err
@@ -101,6 +103,27 @@ func (s *UserRepository) InsertUser(ctx context.Context, user domain.User) error
 	//uid := result.InsertedID.(string)
 	uid := result.InsertedID.(primitive.ObjectID).Hex()
 	fmt.Println("Inserted id:", uid)
+
 	return nil
-	//return nil
+}
+
+func (s *UserRepository) CountRecords(ctx context.Context, fieldName, fieldValue string) (int64, error) {
+	filter := bson.D{{Key: fieldName, Value: fieldValue}}
+	return s.collection.CountDocuments(ctx, filter)
+}
+
+func (s *UserRepository) CreatIndex() error {
+	fmt.Println("============== Create Index")
+	indexName, err := s.collection.Indexes().CreateOne(
+		context.Background(),
+		mongo.IndexModel{
+			Keys:    bson.D{{Key: "name", Value: 1}},
+			Options: options.Index().SetUnique(true),
+		},
+	)
+	fmt.Println("------------ index:", indexName)
+	if err != nil {
+		return err
+	}
+	return nil
 }

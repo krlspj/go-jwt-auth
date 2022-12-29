@@ -47,8 +47,9 @@ func (uc *defAuthzUsecase) IsAdmin(ctx context.Context, token string) error {
 	}
 
 	user, err := uc.userRepo.FindOne(ctx, claims.UserId)
-	if user.IsAdmin() == "false" {
+	if user.IsAdmin() == "true" {
+		return nil
+	} else {
 		return ErrNoAdmin
 	}
-	return nil
 }

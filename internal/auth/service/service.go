@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"log"
 
 	"github.com/krlspj/go-jwt-auth/internal/auth/domain"
@@ -62,7 +63,14 @@ func (s *authService) CreateUser(ctx context.Context, user domain.User) error {
 	//	return err
 	//}
 
-	// Verify user
+	// Ensure user is unique
+	recordsCount, err := s.userRepo.CountRecords(ctx, "username", user.Name())
+	if err != nil {
+		return err
+	}
+	if recordsCount > 0 {
+		return errors.New("Username already exists")
+	}
 
 	// config new user
 	if err := user.HashPassword(); err != nil {

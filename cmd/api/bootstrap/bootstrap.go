@@ -32,7 +32,7 @@ func Run() error {
 
 	// Configuration
 	app := config.NewAppConfig()
-	app.TokenLifetime = 5
+	app.TokenLifetime = 30
 
 	// check connection with database, if error -> use inmemory database
 	// uncoment lines to connect to mongodb if available
@@ -55,6 +55,12 @@ func Run() error {
 			authUserRepo = inmemory.NewUserRepositoryStub()
 		}
 		log.Println("\033[00;32m[NOTICE] Using mongo database\033[0m")
+		// Setup mongo collections
+		err = dbdriver.CreateUserCollection(dbClient.MONGO)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		authUserRepo = auth_mongo.NewUserRepositoryMongo(dbClient.MONGO, mongoDatabase, mongoUserCollection)
 		authzUserRepo = authz_mongo.NewAuthzUserRepositoryMongo(dbClient.MONGO, mongoDatabase, mongoUserCollection)
 

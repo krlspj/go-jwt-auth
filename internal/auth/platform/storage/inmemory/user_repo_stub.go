@@ -65,3 +65,22 @@ func (s *UserRepositoryStub) FindOneByField(ctx context.Context, fieldName, fiel
 	}
 	return domain.User{}, ErrNotUserFound
 }
+func (s *UserRepositoryStub) CountRecords(ctx context.Context, fieldName, fieldValue string) (int64, error) {
+	var amount int64
+	for _, user := range s.users {
+		e := reflect.ValueOf(&user).Elem()
+
+		for i := 0; i < e.NumField(); i++ {
+			varName := e.Type().Field(i).Name
+			//varType := e.Type().Field(i).Type
+			//fmt.Printf("%v %v %v\n", varName, varType, varValue)
+			if fieldName == varName {
+				varValue := e.Field(i).String()
+				if fieldValue == varValue {
+					amount++
+				}
+			}
+		}
+	}
+	return amount, nil
+}

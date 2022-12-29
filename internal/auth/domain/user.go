@@ -116,4 +116,5 @@ type UserRepo interface {
 	FindOne(ctx context.Context, id string) (User, error)
 	FindOneByField(ctx context.Context, fieldName, fieldValue string) (User, error)
 	InsertUser(ctx context.Context, user User) error
+	CountRecords(ctx context.Context, fieldName, fieldValue string) (int64, error)
 }
