@@ -7,7 +7,7 @@ import (
 
 // userDB is the user type in the database
 type userMongo struct {
-	Id          primitive.ObjectID `bson:"_id,omitempty"`
+	ID          primitive.ObjectID `bson:"_id,omitempty"`
 	Name        string             `bson:"username"`
 	Lastname    string             `bson:"lastname"`
 	Password    string             `bson:"password"`
@@ -19,7 +19,7 @@ type userMongo struct {
 // toDomainUser converts the userDB type to domain.User type
 func (u *userMongo) toDomainUser() domain.User {
 	user := new(domain.User)
-	user.SetID(u.Id.Hex())
+	user.SetID(u.ID.Hex())
 	user.SetName(u.Name)
 	user.SetLastname(u.Lastname)
 	user.SetPassword(u.Password)
@@ -49,7 +49,7 @@ func toMongoUser(user domain.User) (userMongo, error) {
 		}
 	}
 	return userMongo{
-		Id:       oid,
+		ID:       oid,
 		Name:     user.Name(),
 		Lastname: user.Lastname(),
 		Password: user.Password(),
