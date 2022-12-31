@@ -38,6 +38,8 @@ func Run() error {
 	app.TokenLifetime = 30
 	app.Database = mongoDatabase
 	app.ConfigCollection = mongoConfigCollection
+	app.UsersCollection = mongoUserCollection
+	app.Collections = []string{app.UsersCollection, app.ConfigCollection}
 
 	// check connection with database, if error -> use inmemory database
 	// uncoment lines to connect to mongodb if available

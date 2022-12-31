@@ -36,7 +36,12 @@ func (m *MongoConfig) GetDatabases(ctx context.Context) ([]string, error) {
 func (m *MongoConfig) GetCollections(ctx context.Context, dbName string) ([]string, error) {
 	//filter := bson.D{{Key: "name", Value: "users"}}
 	//filter := bson.D{{Key: "$in", Value: bson.A{bson.D{{Key: "name", Value: "users"}}}}}
-	filter := bson.M{"name": bson.M{"$in": bson.A{"users", "userse"}}}
+	collections := bson.A{}
+	for _, coll := range m.app.Collections {
+		collections = append(collections, coll)
+	}
+	filter := bson.D{{Key: "name", Value: bson.D{{Key: "$in", Value: collections}}}}
+	//filter := bson.M{"name": bson.M{"$in": collections}}
 	collList, err := m.cli.Database(dbName).ListCollectionNames(ctx, filter)
 	if err != nil {
 		return nil, err

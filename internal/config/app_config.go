@@ -5,6 +5,8 @@ type AppConfig struct {
 	TokenLifetime    int
 	Database         string
 	ConfigCollection string
+	UsersCollection  string
+	Collections      []string
 }
 
 func NewAppConfig() *AppConfig {
