@@ -3,7 +3,7 @@ package config
 type AppConfig struct {
 	// token duration in minutes
 	TokenLifetime    int
-	Database         string
+	DatabaseName     string
 	ConfigCollection string
 	UsersCollection  string
 	Collections      []string

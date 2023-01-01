@@ -6,19 +6,24 @@ import (
 )
 
 type mongoConfig struct {
-	ID        primitive.ObjectID  `bson:"_id,omitempty"`
-	Refresh   bool                `bson:"refresh,omitempty"`
-	CreatedAt primitive.Timestamp `bson:"created_at,omitempty"`
+	ID        primitive.ObjectID `bson:"_id,omitempty"`
+	Refresh   string             `bson:"refresh,omitempty"`
+	CreatedAt int64              `bson:"created_at,omitempty"`
+	//CreatedAt primitive.Timestamp `bson:"created_at,omitempty"`
 }
 
-func (m mongoConfig) toDomain() domain.Config {
+func (m mongoConfig) toDomain() (domain.Config, error) {
 	config := new(domain.Config)
 	config.SetID(m.ID.Hex())
-	//config.SetRefresh(strconv.FormatBool(m.Refresh))
+	//b, err := strconv.ParseBool(m.Refresh)
+	//if err != nil {
+	//	return domain.Config{}, err
+	//}
+	//config.SetRefresh(b)
 	config.SetRefresh(m.Refresh)
-	config.SetCreatedAt(m.CreatedAt.T)
+	config.SetCreatedAt(m.CreatedAt)
 
-	return *config
+	return *config, nil
 }
 
 func toMongoConfig(dConfig domain.Config) (mongoConfig, error) {
@@ -39,8 +44,10 @@ func toMongoConfig(dConfig domain.Config) (mongoConfig, error) {
 	//	}
 	//	mConfig.Refresh = boolValue
 	//}
+	//mConfig.Refresh = strconv.FormatBool(dConfig.Refresh())
 	mConfig.Refresh = dConfig.Refresh()
-	mConfig.CreatedAt = primitive.Timestamp{T: dConfig.CreatedAt()}
+	mConfig.CreatedAt = dConfig.CreatedAt()
+	//mConfig.CreatedAt = primitive.Timestamp{T: dConfig.CreatedAt()}
 
 	return *mConfig, nil
 }

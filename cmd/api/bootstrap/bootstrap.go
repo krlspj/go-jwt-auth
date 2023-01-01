@@ -17,8 +17,8 @@ import (
 	"github.com/krlspj/go-jwt-auth/internal/config"
 	"github.com/krlspj/go-jwt-auth/internal/dbdriver"
 	jwt_service "github.com/krlspj/go-jwt-auth/internal/jwt/service"
+	config_repo "github.com/krlspj/go-jwt-auth/internal/mongoconfig/platform/storage/mongodb"
 	mongo_config_service "github.com/krlspj/go-jwt-auth/internal/mongoconfig/service"
-	"github.com/krlspj/go-jwt-auth/internal/mongoconfig/storage/mongodb"
 	"github.com/krlspj/go-jwt-auth/internal/server"
 )
 
@@ -26,7 +26,7 @@ const (
 	// TODO -> set as enviroment variables (or flags)
 	mongoDatabase         = "jwt_test"
 	mongoUserCollection   = "users"
-	mongoConfigCollection = "config"
+	mongoConfigCollection = "db_config"
 	dbtype                = "mongo" // "mongo" | "inmemory"
 	hmacSampleSecret      = "myTokenSecret"
 )
@@ -36,7 +36,7 @@ func Run() error {
 	// Configuration
 	app := config.NewAppConfig()
 	app.TokenLifetime = 30
-	app.Database = mongoDatabase
+	app.DatabaseName = mongoDatabase
 	app.ConfigCollection = mongoConfigCollection
 	app.UsersCollection = mongoUserCollection
 	app.Collections = []string{app.UsersCollection, app.ConfigCollection}
@@ -96,7 +96,7 @@ func Run() error {
 }
 
 func ConfigDatabase(app *config.AppConfig, client *dbdriver.DB) (string, error) {
-	mongoConfigRepo := mongodb.NewMongoConfigRepo(app, client.MONGO)
+	mongoConfigRepo := config_repo.NewMongoConfigRepo(app, client.MONGO)
 	mongoSetupService := mongo_config_service.NewMongoConfigService(app, mongoConfigRepo)
 	mongoSetupService.GetDatabases()
 	mongoSetupService.CreateConfig()

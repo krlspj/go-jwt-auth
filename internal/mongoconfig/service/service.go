@@ -8,7 +8,7 @@ import (
 
 	"github.com/krlspj/go-jwt-auth/internal/config"
 	"github.com/krlspj/go-jwt-auth/internal/mongoconfig/domain"
-	"github.com/krlspj/go-jwt-auth/internal/mongoconfig/storage"
+	"github.com/krlspj/go-jwt-auth/internal/mongoconfig/platform/storage"
 )
 
 type DBConfigService interface {
@@ -41,10 +41,12 @@ func (s *MongoConfigService) CreateConfig() {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	config := new(domain.Config)
-	config.SetCreatedAt(uint32(time.Now().Unix()))
+	config.SetCreatedAt(time.Now().UnixMilli())
+	config.SetRefresh("false")
+
 	fmt.Println("created at time:", config.CreatedAt())
 
-	id, err := s.mgdb.CreateConfig(ctx, *config)
+	id, err := s.mgdb.CreateDBConfig(ctx, *config)
 	if err != nil {
 		log.Fatal(err)
 	}
