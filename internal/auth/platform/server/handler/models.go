@@ -6,6 +6,7 @@ import (
 )
 
 type userReq struct {
+	ID       string `json:"id,omitempty"`
 	Name     string `json:"username" validate:"required,min=3,max=15"`
 	LastName string `json:"lastname,omitemtpy"`
 	Password string `json:"password" validate:"required,min=8,max=30"`
@@ -14,6 +15,7 @@ type userReq struct {
 
 func (m *userReq) toDomainUser() domain.User {
 	var u domain.User
+	u.SetID(m.ID)
 	u.SetName(m.Name)
 	u.SetLastname(m.LastName)
 	u.SetPassword(m.Password)

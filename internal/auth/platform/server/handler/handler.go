@@ -176,6 +176,48 @@ func (h *AuthHandler) validateReq(req userReq) error {
 	return nil
 }
 
+// ------------- Functions for testings purposes ( this code should go inside /internal/user bounded context) ---------------
+func (h *AuthHandler) PutUser(c *gin.Context) {
+	var user userReq
+	if err := c.BindJSON(&user); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	uid := c.Param("id")
+	//err := user.ValidateUser()
+	err := h.validateReq(user)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, err.Error())
+		return
+	}
+	err = h.authService.UpdateUser(c.Request.Context(), uid, user.toDomainUser())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+	c.JSON(http.StatusOK, "")
+}
+func (h *AuthHandler) PatchUser(c *gin.Context) {
+	var user userReq
+	if err := c.BindJSON(&user); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	uid := c.Param("id")
+	//err := user.ValidateUser()
+	err := h.validateReq(user)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, err.Error())
+		return
+	}
+	err = h.authService.PatchUser(c.Request.Context(), uid, user.toDomainUser())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+	c.JSON(http.StatusOK, "")
+}
+
 //type jwtClaims struct {
 //	Username string `json:"username,omitemtpy"`
 //	UserId   string `json:"userId,omitempty"`

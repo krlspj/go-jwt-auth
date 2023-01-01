@@ -84,8 +84,9 @@ func Run() error {
 	authService := service.NewAuthService(authUserRepo)
 	authzUsecase := authz_uc.NewAuthzUsecase(jwtService, authzUserRepo)
 
+	validatorObj := validator.New()
 	// Handler / controller
-	ah := auth_handler.NewAuthHanlderRepo(app, authService, jwtService, validator.New())
+	ah := auth_handler.NewAuthHanlderRepo(app, authService, jwtService, validatorObj)
 	az := authz_handler.NewAuthz(app, authzUsecase)
 
 	ctx := context.TODO()

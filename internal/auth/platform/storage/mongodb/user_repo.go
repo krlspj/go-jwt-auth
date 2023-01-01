@@ -107,6 +107,36 @@ func (s *UserRepository) InsertUser(ctx context.Context, user domain.User) error
 	return nil
 }
 
+func (s *UserRepository) ReplaceUser(ctx context.Context, user domain.User) error {
+	userMg, err := toMongoUser(user)
+	if err != nil {
+		return err
+	}
+	fmt.Println("--------- userMg", userMg)
+	filter := bson.D{{Key: "_id", Value: userMg.ID}}
+	result, err := s.collection.ReplaceOne(ctx, filter, userMg)
+	if err != nil {
+		return err
+	}
+	fmt.Println("result", result)
+	return nil
+}
+
+func (s *UserRepository) UpdateUser(ctx context.Context, user domain.User) error {
+	userMg, err := toMongoUser(user)
+	if err != nil {
+		return err
+	}
+	fmt.Println("--------- userMg", userMg)
+	filter := bson.D{{Key: "_id", Value: userMg.ID}}
+	doc := bson.D{{Key: "$set", Value: userMg}}
+	result, err := s.collection.UpdateOne(ctx, filter, doc)
+	if err != nil {
+		return err
+	}
+	fmt.Println("result", result)
+	return nil
+}
 func (s *UserRepository) CountRecords(ctx context.Context, fieldName, fieldValue string) (int64, error) {
 	filter := bson.D{{Key: fieldName, Value: fieldValue}}
 	return s.collection.CountDocuments(ctx, filter)

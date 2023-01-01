@@ -15,6 +15,8 @@ type AuthService interface {
 	FindUserByField(ctx context.Context, field, value string) (domain.User, error)
 	LoginUser(ctx context.Context, username, password string) (domain.User, error)
 	CreateUser(ctx context.Context, user domain.User) error
+	UpdateUser(ctx context.Context, id string, user domain.User) error
+	PatchUser(ctx context.Context, id string, user domain.User) error
 }
 
 type authService struct {
@@ -79,6 +81,22 @@ func (s *authService) CreateUser(ctx context.Context, user domain.User) error {
 
 	// Insert user in database
 	if err := s.userRepo.InsertUser(ctx, user); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *authService) UpdateUser(ctx context.Context, id string, user domain.User) error {
+	err := s.userRepo.ReplaceUser(ctx, user)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *authService) PatchUser(ctx context.Context, id string, user domain.User) error {
+	err := s.userRepo.UpdateUser(ctx, user)
+	if err != nil {
 		return err
 	}
 	return nil

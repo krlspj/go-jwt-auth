@@ -84,3 +84,12 @@ func (s *UserRepositoryStub) CountRecords(ctx context.Context, fieldName, fieldV
 	}
 	return amount, nil
 }
+
+func (s *UserRepositoryStub) ReplaceUser(ctx context.Context, user domain.User) error {
+	fmt.Println("NOT IMPLEMENTED YET")
+	return nil
+}
+func (s *UserRepositoryStub) UpdateUser(ctx context.Context, user domain.User) error {
+	fmt.Println("NOT IMPLEMENTED YET")
+	return nil
+}

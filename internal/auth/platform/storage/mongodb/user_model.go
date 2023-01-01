@@ -8,12 +8,12 @@ import (
 // userDB is the user type in the database
 type userMongo struct {
 	ID          primitive.ObjectID `bson:"_id,omitempty"`
-	Name        string             `bson:"username"`
-	Lastname    string             `bson:"lastname"`
-	Password    string             `bson:"password"`
-	Token       string             `bson:"token"`
-	CreatedTime string             `bson:"createdTime"`
-	UpdatedTime string             `bson:"updatedTime"`
+	Name        string             `bson:"username,omitempty"`
+	Lastname    string             `bson:"lastname,omitempty"`
+	Password    string             `bson:"password,omitempty"`
+	Token       string             `bson:"token,omitempty"`
+	CreatedTime string             `bson:"createdTime,omitempty"`
+	UpdatedTime string             `bson:"updatedTime,omitempty"`
 }
 
 // toDomainUser converts the userDB type to domain.User type
