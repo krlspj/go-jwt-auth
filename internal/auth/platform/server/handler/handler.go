@@ -190,7 +190,7 @@ func (h *AuthHandler) PutUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
-	err = h.authService.UpdateUser(c.Request.Context(), uid, user.toDomainUser())
+	err = h.authService.UpsertUser(c.Request.Context(), uid, user.toDomainUser())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return

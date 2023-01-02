@@ -112,9 +112,17 @@ func (s *UserRepository) ReplaceUser(ctx context.Context, user domain.User) erro
 	if err != nil {
 		return err
 	}
-	fmt.Println("--------- userMg", userMg)
+	if userMg.ID == (primitive.ObjectID{}) {
+		fmt.Println("Set new ID")
+		userMg.ID = primitive.NewObjectID()
+	}
 	filter := bson.D{{Key: "_id", Value: userMg.ID}}
-	result, err := s.collection.ReplaceOne(ctx, filter, userMg)
+	upsert := true
+	options := options.ReplaceOptions{
+		Upsert: &upsert,
+	}
+	_ = options
+	result, err := s.collection.ReplaceOne(ctx, filter, userMg, &options)
 	if err != nil {
 		return err
 	}

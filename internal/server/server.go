@@ -104,8 +104,8 @@ func (s *Server) registerRoutes() {
 	usersGroup.GET("/c", s.ah.FindUsersC)
 	usersGroup.GET("/:id", s.ah.FindUser)
 	usersGroup.GET("/by_field", s.ah.FindUserByField)
-	usersGroup.PUT("/:id", s.ah.PutUser)
-	usersGroup.PATCH("/:id", s.ah.PatchUser)
+	usersGroup.PUT("/", s.ah.PutUser)
+	usersGroup.PATCH("/", s.ah.PatchUser)
 
 	configGroup := s.engine.Group("/v1/config")
 	configGroup.GET("/:id")

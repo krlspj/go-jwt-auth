@@ -15,7 +15,7 @@ type AuthService interface {
 	FindUserByField(ctx context.Context, field, value string) (domain.User, error)
 	LoginUser(ctx context.Context, username, password string) (domain.User, error)
 	CreateUser(ctx context.Context, user domain.User) error
-	UpdateUser(ctx context.Context, id string, user domain.User) error
+	UpsertUser(ctx context.Context, id string, user domain.User) error
 	PatchUser(ctx context.Context, id string, user domain.User) error
 }
 
@@ -86,7 +86,7 @@ func (s *authService) CreateUser(ctx context.Context, user domain.User) error {
 	return nil
 }
 
-func (s *authService) UpdateUser(ctx context.Context, id string, user domain.User) error {
+func (s *authService) UpsertUser(ctx context.Context, id string, user domain.User) error {
 	err := s.userRepo.ReplaceUser(ctx, user)
 	if err != nil {
 		return err
