@@ -52,3 +52,8 @@ func (s *MongoConfigService) CreateConfig() {
 	}
 	fmt.Println("Config ID", id)
 }
+
+func (s *MongoConfigService) DropDatabase() error {
+
+	return nil
+}

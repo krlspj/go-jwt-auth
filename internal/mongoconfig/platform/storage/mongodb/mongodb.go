@@ -95,6 +95,14 @@ func (m *MongoConfigRepo) UpdateDBConfig(ctx context.Context, config domain.Conf
 	return nil
 }
 
+func (m *MongoConfigRepo) DropDatabase(ctx context.Context, dbName string) error {
+	return m.cli.Database(dbName).Drop(ctx)
+}
+
+func (m *MongoConfigRepo) DropCollection(ctx context.Context, dbName, collName string) error {
+	return m.cli.Database(dbName).Collection(collName).Drop(ctx)
+}
+
 func (m *MongoConfigRepo) CreateUserCollection(ctx context.Context) error {
 	userCollOpts := options.CreateCollectionOptions{
 		Validator: bson.M{
