@@ -66,6 +66,8 @@ func (m *MongoConfigRepo) FindConfig(ctx context.Context) (domain.Config, error)
 func (m *MongoConfigRepo) CreateDBConfig(ctx context.Context, config domain.Config) (string, error) {
 	coll := m.cli.Database(m.app.DatabaseName).Collection(m.app.ConfigCollection)
 	mgConfig, err := toMongoConfig(config)
+	fmt.Println("[debug] domain.Config:", config)
+	fmt.Println("[debug] mongo Config:", mgConfig)
 	if err != nil {
 		return "", err
 	}
@@ -86,7 +88,8 @@ func (m *MongoConfigRepo) UpdateDBConfig(ctx context.Context, config domain.Conf
 		return err
 	}
 	filter := bson.D{{Key: "_id", Value: mgConfig.ID}}
-	result, err := coll.UpdateOne(ctx, filter, mgConfig)
+	doc := bson.M{"$set": mgConfig}
+	result, err := coll.UpdateOne(ctx, filter, doc)
 	if err != nil {
 		return err
 	}

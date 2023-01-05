@@ -9,6 +9,7 @@ type mongoConfig struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty"`
 	Refresh   string             `bson:"refresh,omitempty"`
 	CreatedAt int64              `bson:"created_at,omitempty"`
+	RefreshB  *bool              `bson:"refreshB,omitempty"`
 	//CreatedAt primitive.Timestamp `bson:"created_at,omitempty"`
 }
 
@@ -22,6 +23,7 @@ func (m mongoConfig) toDomain() (domain.Config, error) {
 	//config.SetRefresh(b)
 	config.SetRefresh(m.Refresh)
 	config.SetCreatedAt(m.CreatedAt)
+	config.SetRefreshB(*m.RefreshB)
 
 	return *config, nil
 }
@@ -47,6 +49,7 @@ func toMongoConfig(dConfig domain.Config) (mongoConfig, error) {
 	//mConfig.Refresh = strconv.FormatBool(dConfig.Refresh())
 	mConfig.Refresh = dConfig.Refresh()
 	mConfig.CreatedAt = dConfig.CreatedAt()
+	mConfig.RefreshB = dConfig.RefreshB()
 	//mConfig.CreatedAt = primitive.Timestamp{T: dConfig.CreatedAt()}
 
 	return *mConfig, nil

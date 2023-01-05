@@ -4,7 +4,7 @@ type Config struct {
 	id        string
 	refresh   string
 	createdAt int64
-	//refresh   bool
+	refreshB  *bool
 }
 
 func (c *Config) ID() string {
@@ -21,6 +21,12 @@ func (c *Config) SetRefresh(b string) {
 	c.refresh = b
 }
 
+func (c *Config) RefreshB() *bool {
+	return c.refreshB
+}
+func (c *Config) SetRefreshB(b bool) {
+	c.refreshB = &b
+}
 func (c *Config) CreatedAt() int64 {
 	return c.createdAt
 }
