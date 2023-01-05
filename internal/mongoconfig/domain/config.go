@@ -1,10 +1,29 @@
 package domain
 
+type EmbeddedStruct struct {
+	name    string
+	surname string
+}
+
+func (es *EmbeddedStruct) Name() string {
+	return es.name
+}
+func (es *EmbeddedStruct) SetName(s string) {
+	es.name = s
+}
+func (es *EmbeddedStruct) Surname() string {
+	return es.surname
+}
+func (es *EmbeddedStruct) SetSurname(s string) {
+	es.surname = s
+}
+
 type Config struct {
 	id        string
 	refresh   string
 	createdAt int64
 	refreshB  *bool
+	EmbeddedStruct
 }
 
 func (c *Config) ID() string {

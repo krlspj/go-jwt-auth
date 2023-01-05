@@ -44,16 +44,19 @@ func (s *MongoConfigService) CreateConfig() {
 	config.SetCreatedAt(time.Now().UnixMilli())
 	config.SetRefresh("false")
 	config.SetRefreshB(false)
-	config.SetID("63b6aa7ef7d6abd165511767")
+
+	config.SetName("krls")
+	config.SetSurname("Tesla")
 
 	fmt.Println("created at time:", config.CreatedAt())
 
-	//id, err := s.mgdb.CreateDBConfig(ctx, *config)
-	err := s.mgdb.UpdateDBConfig(ctx, *config)
+	//config.SetID("63b6aa7ef7d6abd165511767")
+	//err := s.mgdb.UpdateDBConfig(ctx, *config)
+	id, err := s.mgdb.CreateDBConfig(ctx, *config)
 	if err != nil {
 		log.Fatal(err)
 	}
-	//fmt.Println("Config ID", id)
+	fmt.Println("Config ID", id)
 }
 
 func (s *MongoConfigService) DropDatabase() error {
