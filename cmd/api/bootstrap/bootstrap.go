@@ -20,6 +20,9 @@ import (
 	config_repo "github.com/krlspj/go-jwt-auth/internal/mongoconfig/platform/storage/mongodb"
 	mongo_config_service "github.com/krlspj/go-jwt-auth/internal/mongoconfig/service"
 	"github.com/krlspj/go-jwt-auth/internal/server"
+	"github.com/krlspj/go-jwt-auth/internal/user/platform/http/handler"
+	user_mongo "github.com/krlspj/go-jwt-auth/internal/user/platform/storage/mongodb"
+	user_service "github.com/krlspj/go-jwt-auth/internal/user/service"
 )
 
 const (
@@ -92,6 +95,12 @@ func Run() error {
 	ctx := context.TODO()
 	s := server.NewServer(ctx, "localhost", 60002, ah, az)
 	serverType := "native" // "gin" | "native"
+
+	// Register routes in handler
+	userRepo := user_mongo.NewUserRepositoryMongo()
+	userService := user_service.NewUserService(userRepo)
+
+	handler.NewUserHandler(s.GetEngine(), userService)
 
 	return s.Run(ctx, serverType)
 }

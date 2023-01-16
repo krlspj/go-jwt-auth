@@ -57,6 +57,9 @@ func NewServer(
 	return srv
 
 }
+func (s *Server) GetEngine() *gin.Engine {
+	return s.engine
+}
 
 func (s *Server) Run(ctx context.Context, serverType string) error {
 	log.Printf("Listening on %s\n", s.httpAddr)
