@@ -103,12 +103,12 @@ func (s *Server) registerRoutes() {
 	usersGroup := s.engine.Group("/users")
 	usersGroup.Use(s.az.VeriyToken)
 
-	usersGroup.GET("/", s.az.OnlyAdmin(), s.ah.FindUsers())
+	usersGroup.GET("", s.az.OnlyAdmin(), s.ah.FindUsers())
 	usersGroup.GET("/c", s.ah.FindUsersC)
 	usersGroup.GET("/:id", s.ah.FindUser)
 	usersGroup.GET("/by_field", s.ah.FindUserByField)
-	usersGroup.PUT("/", s.ah.PutUser)
-	usersGroup.PATCH("/", s.ah.PatchUser)
+	usersGroup.PUT("", s.ah.PutUser)
+	usersGroup.PATCH("", s.ah.PatchUser)
 
 	configGroup := s.engine.Group("/v1/config")
 	configGroup.GET("/:id")
